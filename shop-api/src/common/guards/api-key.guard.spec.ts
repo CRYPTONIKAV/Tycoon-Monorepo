@@ -38,6 +38,14 @@ describe('ApiKeyAuthGuard', () => {
     ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
+  it('rejects a same-length wrong API key with 401', async () => {
+    process.env.SHOP_API_KEY = 'shop-secret';
+    const guard = new ApiKeyAuthGuard(new JwtService({ secret: 'test' }));
+    await expect(
+      guard.canActivate(mockContext({ 'x-api-key': 'shop-secrex' })),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
   it('rejects a missing API key with 401 when no JWT is sent', async () => {
     process.env.SHOP_API_KEY = 'shop-secret';
     const guard = new ApiKeyAuthGuard(new JwtService({ secret: 'test' }));
