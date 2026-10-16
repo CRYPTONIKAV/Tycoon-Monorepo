@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, LessThan } from "typeorm";
 import { createHash } from "crypto";
@@ -14,11 +14,28 @@ export type StoredOutcome = {
 };
 
 @Injectable()
-export class IdempotencyService {
+export class IdempotencyService implements OnModuleInit {
+  private readonly logger = new Logger(IdempotencyService.name);
+
   constructor(
     @InjectRepository(IdempotencyRecord)
     private readonly repo: Repository<IdempotencyRecord>,
   ) {}
+
+  /**
+   * Purge rows expired before boot, so the table does not grow unbounded
+   * waiting for a client to replay each key. Guarded: a purge failure must
+   * never crash boot; it is logged and retried on the next replay.
+   */
+  async onModuleInit(): Promise<void> {
+    try {
+      await this.purgeExpired();
+    } catch (error) {
+      this.logger.warn(
+        `Startup purge of expired idempotency records failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
 
   buildId(method: string, path: string, key: string): string {
     return `${method.toUpperCase()}:${path}:${key}`;
