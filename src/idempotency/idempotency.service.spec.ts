@@ -66,6 +66,17 @@ describe("IdempotencyService", () => {
     });
   });
 
+  it("purges on module init", async () => {
+    const repo = repository();
+    const service = serviceWith(repo);
+
+    await expect(service.onModuleInit()).resolves.toBeUndefined();
+
+    expect(repo.delete).toHaveBeenCalledWith({
+      expiresAt: LessThan(expect.any(Date)),
+    });
+  });
+
   it("purges on module init without crashing boot when the purge fails", async () => {
     const repo = repository();
     repo.delete.mockRejectedValue(new Error("db is down"));
