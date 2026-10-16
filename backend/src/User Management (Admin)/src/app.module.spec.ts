@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DataSource } from 'typeorm';
 import { AppModule } from './app.module';
+import { UsersController } from './users/users.controller';
+import { UsersService } from './users/users.service';
 
 /**
  * Boot-level spec: compiles the full admin AppModule graph (imports,
@@ -28,6 +30,8 @@ describe('AppModule', () => {
   });
 
   it('compiles the module graph without a live database', () => {
-    expect(module.get(AppModule, { strict: false })).toBeDefined();
+    expect(module.get(AppModule)).toBeInstanceOf(AppModule);
+    expect(module.get(UsersController)).toBeInstanceOf(UsersController);
+    expect(module.get(UsersService)).toBeInstanceOf(UsersService);
   });
 });
